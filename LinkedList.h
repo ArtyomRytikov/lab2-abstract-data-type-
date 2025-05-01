@@ -1,50 +1,52 @@
 #ifndef LINKEDLIST_H
 #define LINKEDLIST_H
 #include <stdexcept>
-
 template <class T>
-class LinkedList {
+class LinkedList 
+{
 private:
-    struct Node {
+    struct Node 
+    {
         T data;
         Node* next;
         Node(T value) : data(value), next(nullptr) {}
     };
-    
     Node* head;
     int length;
-
 public:
-    LinkedList(T* items, int count) : head(nullptr), length(0) {
-        for (int i = 0; i < count; ++i) {
+    LinkedList(T* items, int count) : head(nullptr), length(0) 
+    {
+        for (int i = 0; i < count; i++) 
+        {
             Append(items[i]);
         }
     }
-
     LinkedList() : head(nullptr), length(0) {}
-
-    LinkedList(const LinkedList<T>& list) : head(nullptr), length(0) {
+    LinkedList(const LinkedList<T>& list) : head(nullptr), length(0) 
+    {
         Node* current = list.head;
-        while (current) {
+        while (current) 
+        {
             Append(current->data);
             current = current->next;
         }
     }
-
-    ~LinkedList() {
-        while (head) {
+    ~LinkedList() 
+    {
+        while (head) 
+        {
             Node* temp = head;
             head = head->next;
             delete temp;
         }
     }
-
-    T GetFirst() const {
+    T GetFirst() const 
+    {
         if (!head) throw std::runtime_error("Список пуст");
         return head->data;
     }
-
-    T GetLast() const {
+    T GetLast() const 
+    {
         if (!head) throw std::runtime_error("Список пуст");
         Node* current = head;
         while (current->next) {
@@ -52,64 +54,73 @@ public:
         }
         return current->data;
     }
-
-    T Get(int index) const {
+    T Get(int index) const 
+    {
         if (index < 0 || index >= length) throw std::out_of_range("Индекс вне диапазона");
         Node* current = head;
-        for (int i = 0; i < index; ++i) {
+        for (int i = 0; i < index; i++) 
+        {
             current = current->next;
         }
         return current->data;
     }
-
-    LinkedList<T> GetSubList(int startIndex, int endIndex) const {
+    LinkedList<T> GetSubList(int startIndex, int endIndex) const 
+    {
         if (startIndex < 0 || endIndex >= length || startIndex > endIndex) 
             throw std::out_of_range("Индекс вне диапазона");
-        
         LinkedList<T> sublist;
         Node* current = head;
-
-        for (int i = 0; current && i <= endIndex; ++i) {
-            if (i >= startIndex) {
+        for (int i = 0; current && i <= endIndex; i++) 
+        {
+            if (i >= startIndex) 
+            {
                 sublist.Append(current->data);
             }
             current = current->next;
         }
         return sublist;
     }
-
-    int GetLength() const {
+    int GetLength() const 
+    {
         return length;
     }
-
-    void Append(T item) {
+    void Append(T item) 
+    {
         Node* newNode = new Node(item);
-        if (!head) {
+        if (!head) 
+        {
             head = newNode;
-        } else {
+        } 
+        else 
+        {
             Node* current = head;
-            while (current->next) {
+            while (current->next) 
+            {
                 current = current->next;
             }
             current->next = newNode;
         }
         length++;
     }
-
-    void Prepend(T item) {
+    void Prepend(T item) 
+    {
         Node* newNode = new Node(item);
         newNode->next = head;
         head = newNode;
         length++;
     }
-
-    void InsertAt(T item, int index) {
+    void InsertAt(T item, int index) 
+    {
         if (index < 0 || index > length) throw std::out_of_range("Индекс вне диапазона");
-        if (index == 0) {
+        if (index == 0) 
+        {
             Prepend(item);
-        } else {
+        } 
+        else 
+        {
             Node* current = head;
-            for (int i = 0; i < index - 1; ++i) {
+            for (int i = 0; i < index - 1; i++) 
+            {
                 current = current->next;
             }
             Node* newNode = new Node(item);
@@ -118,11 +129,12 @@ public:
             length++;
         }
     }
-
-    LinkedList<T> Concat(const LinkedList<T>& list) const {
+    LinkedList<T> Concat(const LinkedList<T>& list) const 
+    {
         LinkedList<T> result(*this);
         Node* current = list.head;
-        while (current) {
+        while (current) 
+        {
             result.Append(current->data);
             current = current->next;
         }
