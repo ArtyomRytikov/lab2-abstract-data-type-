@@ -6,118 +6,213 @@ template <class T>
 class Sequence 
 {
 public:
-    virtual T GetFirst() = 0;
-    virtual T GetLast() = 0;
-    virtual T Get(int index) = 0;
-    virtual int GetLength() = 0;
+    virtual ~Sequence() = default;
+    virtual T GetFirst() const = 0;
+    virtual T GetLast() const = 0;
+    virtual T Get(int index) const = 0;
+    virtual int GetLength() const = 0;
+    virtual Sequence<T>* GetSubsequence(int startIndex, int endIndex) const = 0;
+    virtual Sequence<T>* Clone() const = 0;
     virtual Sequence<T>* Append(T item) = 0;
     virtual Sequence<T>* Prepend(T item) = 0;
     virtual Sequence<T>* InsertAt(T item, int index) = 0;
     virtual Sequence<T>* Concat(Sequence<T>* list) = 0;
 };
+
 template <class T>
-class ArraySequence : public Sequence<T> 
+class MutableArraySequence;
+template <class T>
+class ImmutableArraySequence;
+template <class T>
+class BaseArraySequence : public Sequence<T> 
 {
-private:
+protected:
     DynamicArray<T> array;
 
 public:
-    ArraySequence(T* items, int count) : array(items, count) {}
-    ArraySequence() : array(0) {}
-    ArraySequence(const LinkedList<T>& list);
-
-    T GetFirst() override { return array.Get(0); }
-    T GetLast() override { return array.Get(array.GetSize() - 1); }
-    T Get(int index) override { return array.Get(index); }
-    int GetLength() override { return array.GetSize(); }
+    BaseArraySequence(T* items, int count) : array(items, count) {}
+    BaseArraySequence() : array(0) {}
+    BaseArraySequence(const DynamicArray<T>& arr) : array(arr) {}
+    T GetFirst() const override { return array.Get(0); }
+    T GetLast() const override { return array.Get(array.GetSize() - 1); }
+    T Get(int index) const override { return array.Get(index); }
+    int GetLength() const override { return array.GetSize(); }
+    Sequence<T>* GetSubsequence(int startIndex, int endIndex) const override 
+    {
+        DynamicArray<T> subArray(endIndex - startIndex + 1);
+        for (int i = startIndex; i <= endIndex; i++) 
+        {
+            subArray.Set(i - startIndex, array.Get(i));
+        }
+        return new MutableArraySequence<T>(subArray);
+    }
+    Sequence<T>* Clone() const override {
+        return new MutableArraySequence<T>(array);
+    }
+    Sequence<T>* Append(T item) override { return nullptr; }
+    Sequence<T>* Prepend(T item) override { return nullptr; }
+    Sequence<T>* InsertAt(T item, int index) override { return nullptr; }
+    Sequence<T>* Concat(Sequence<T>* list) override { return nullptr; }
+};
+template <class T>
+class MutableArraySequence : public BaseArraySequence<T> 
+{
+public:
+    using BaseArraySequence<T>::BaseArraySequence;
     Sequence<T>* Append(T item) override 
     {
-        array.Resize(array.GetSize() + 1);
-        array.Set(array.GetSize() - 1, item);
+        this->array.Resize(this->array.GetSize() + 1);
+        this->array.Set(this->array.GetSize() - 1, item);
         return this;
     }
     Sequence<T>* Prepend(T item) override 
     {
-        DynamicArray<T> newArray(array.GetSize() + 1);
-        newArray.Set(0, item);
-        for (int i = 0; i < array.GetSize(); ++i) 
-        {
-            newArray.Set(i + 1, array.Get(i));
-        }
-        array = newArray;
+        this->array.InsertAt(item, 0);
         return this;
     }
     Sequence<T>* InsertAt(T item, int index) override 
     {
-        if (index < 0 || index > array.GetSize()) throw std::out_of_range("Индекс вне диапазона");
-        DynamicArray<T> newArray(array.GetSize() + 1);
-        for (int i = 0; i < index; ++i) 
-        {
-            newArray.Set(i, array.Get(i));
-        }
-        newArray.Set(index, item);
-        for (int i = index; i < array.GetSize(); ++i) 
-        {
-            newArray.Set(i + 1, array.Get(i));
-        }
-        array = newArray;
+        this->array.InsertAt(item, index);
         return this;
-    }
+    } 
     Sequence<T>* Concat(Sequence<T>* seq) override 
     {
-        if (seq->GetLength() == 0) return this;
-        T newItems[seq->GetLength()];
-        for (int i = 0; i < seq->GetLength(); ++i) 
+        for (int i = 0; i < seq->GetLength(); i++) 
         {
-            newItems[i] = seq->Get(i);
-        }
-        for (int i = 0; i < seq->GetLength(); ++i)
-        {
-            Append(newItems[i]);
+            this->Append(seq->Get(i));
         }
         return this;
     }
 };
 template <class T>
-class ListSequence : public Sequence<T> 
+class ImmutableArraySequence : public BaseArraySequence<T> 
 {
-private:
+public:
+    using BaseArraySequence<T>::BaseArraySequence;
+    Sequence<T>* Append(T item) override 
+    {
+        ImmutableArraySequence<T>* newSeq = new ImmutableArraySequence<T>(this->array);
+        newSeq->array.Resize(newSeq->array.GetSize() + 1);
+        newSeq->array.Set(newSeq->array.GetSize() - 1, item);
+        return newSeq;
+    }
+    Sequence<T>* Prepend(T item) override 
+    {
+        ImmutableArraySequence<T>* newSeq = new ImmutableArraySequence<T>(this->array);
+        newSeq->array.InsertAt(item, 0);
+        return newSeq;
+    }
+    Sequence<T>* InsertAt(T item, int index) override 
+    {
+        ImmutableArraySequence<T>* newSeq = new ImmutableArraySequence<T>(this->array);
+        newSeq->array.InsertAt(item, index);
+        return newSeq;
+    }
+    Sequence<T>* Concat(Sequence<T>* seq) override 
+    {
+        ImmutableArraySequence<T>* newSeq = new ImmutableArraySequence<T>(this->array);
+        for (int i = 0; i < seq->GetLength(); i++) {
+            newSeq->Append(seq->Get(i));
+        }
+        return newSeq;
+    }
+};
+template <class T>
+class MutableListSequence;
+template <class T>
+class ImmutableListSequence;
+template <class T>
+class BaseListSequence : public Sequence<T> 
+{
+protected:
     LinkedList<T> list;
 
 public:
-    ListSequence(T* items, int count) : list(items, count) {}
-    ListSequence() : list() {}
-    ListSequence(const LinkedList<T>& list) : list(list) {}
-
-    T GetFirst() override { return list.GetFirst(); }
-    T GetLast() override { return list.GetLast(); }
-    T Get(int index) override { return list.Get(index); }
-    int GetLength() override { return list.GetLength(); }
+    BaseListSequence(T* items, int count) : list(items, count) {}
+    BaseListSequence() : list() {}
+    BaseListSequence(const LinkedList<T>& list) : list(list) {}
+    T GetFirst() const override { return list.GetFirst(); }
+    T GetLast() const override { return list.GetLast(); }
+    T Get(int index) const override { return list.Get(index); }
+    int GetLength() const override { return list.GetLength(); }
+    Sequence<T>* GetSubsequence(int startIndex, int endIndex) const override 
+    {
+        LinkedList<T> subList = list.GetSubList(startIndex, endIndex);
+        return new MutableListSequence<T>(subList);
+    }
+    Sequence<T>* Clone() const override 
+    {
+        return new MutableListSequence<T>(list);
+    }
+    Sequence<T>* Append(T item) override { return nullptr; }
+    Sequence<T>* Prepend(T item) override { return nullptr; }
+    Sequence<T>* InsertAt(T item, int index) override { return nullptr; }
+    Sequence<T>* Concat(Sequence<T>* list) override { return nullptr; }
+};
+template <class T>
+class MutableListSequence : public BaseListSequence<T> 
+{
+public:
+    using BaseListSequence<T>::BaseListSequence;
     Sequence<T>* Append(T item) override 
     {
-        list.Append(item);
+        this->list.Append(item);
         return this;
     }
     Sequence<T>* Prepend(T item) override 
     {
-        list.Prepend(item);
+        this->list.Prepend(item);
         return this;
     }
     Sequence<T>* InsertAt(T item, int index) override 
     {
-        list.InsertAt(item, index);
+        this->list.InsertAt(item, index);
         return this;
     }
     Sequence<T>* Concat(Sequence<T>* seq) override 
     {
-        ListSequence<T>* result = new ListSequence<T>(*this);
-        if (seq->GetLength() == 0) return result;
-
-        for (int i = 0; i < seq->GetLength(); ++i) 
+        for (int i = 0; i < seq->GetLength(); i++) 
         {
-            result->Append(seq->Get(i));
+            this->list.Append(seq->Get(i));
         }
-        return result;
+        return this;
+    }
+};
+template <class T>
+class ImmutableListSequence : public BaseListSequence<T> 
+{
+public:
+    using BaseListSequence<T>::BaseListSequence;
+    
+    Sequence<T>* Append(T item) override 
+    {
+        ImmutableListSequence<T>* newSeq = new ImmutableListSequence<T>(this->list);
+        newSeq->list.Append(item);
+        return newSeq;
+    }
+    
+    Sequence<T>* Prepend(T item) override 
+    {
+        ImmutableListSequence<T>* newSeq = new ImmutableListSequence<T>(this->list);
+        newSeq->list.Prepend(item);
+        return newSeq;
+    }
+    
+    Sequence<T>* InsertAt(T item, int index) override 
+    {
+        ImmutableListSequence<T>* newSeq = new ImmutableListSequence<T>(this->list);
+        newSeq->list.InsertAt(item, index);
+        return newSeq;
+    }
+    
+    Sequence<T>* Concat(Sequence<T>* seq) override 
+    {
+        ImmutableListSequence<T>* newSeq = new ImmutableListSequence<T>(this->list);
+        for (int i = 0; i < seq->GetLength(); i++) 
+        {
+            newSeq->list.Append(seq->Get(i));
+        }
+        return newSeq;
     }
 };
 #endif
