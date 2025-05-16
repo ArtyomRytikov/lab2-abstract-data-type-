@@ -33,7 +33,13 @@ public:
     {
         delete[] items;
     }
-    T Get(int index) const 
+    const T& Get(int index) const 
+    {
+        if (index < 0 || index >= size) throw std::out_of_range("Индекс вне диапазона");
+        return items[index];
+    }
+
+    T& Get(int index) 
     {
         if (index < 0 || index >= size) throw std::out_of_range("Индекс вне диапазона");
         return items[index];
@@ -50,7 +56,8 @@ public:
     void Resize(int newSize) 
     {
         T* newItems = new T[newSize];
-        for (int i = 0; i < (newSize < size ? newSize : size); i++) 
+        int copySize = (newSize < size) ? newSize : size;
+        for (int i = 0; i < copySize; i++) 
         {
             newItems[i] = items[i];
         }

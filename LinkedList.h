@@ -25,8 +25,7 @@ public:
     LinkedList(const LinkedList<T>& list) : head(nullptr), length(0) 
     {
         Node* current = list.head;
-        while (current) 
-        {
+        while (current) {
             Append(current->data);
             current = current->next;
         }
@@ -40,21 +39,47 @@ public:
             delete temp;
         }
     }
-    T GetFirst() const 
+    const T& GetFirst() const 
     {
         if (!head) throw std::runtime_error("Список пуст");
         return head->data;
     }
-    T GetLast() const 
+    T& GetFirst() 
+    {
+        if (!head) throw std::runtime_error("Список пуст");
+        return head->data;
+    }
+    const T& GetLast() const 
     {
         if (!head) throw std::runtime_error("Список пуст");
         Node* current = head;
-        while (current->next) {
+        while (current->next) 
+        {
             current = current->next;
         }
         return current->data;
     }
-    T Get(int index) const 
+    T& GetLast() 
+    {
+        if (!head) throw std::runtime_error("Список пуст");
+        Node* current = head;
+        while (current->next) 
+        {
+            current = current->next;
+        }
+        return current->data;
+    }
+    const T& Get(int index) const 
+    {
+        if (index < 0 || index >= length) throw std::out_of_range("Индекс вне диапазона");
+        Node* current = head;
+        for (int i = 0; i < index; i++) 
+        {
+            current = current->next;
+        }
+        return current->data;
+    }
+    T& Get(int index) 
     {
         if (index < 0 || index >= length) throw std::out_of_range("Индекс вне диапазона");
         Node* current = head;
@@ -66,8 +91,7 @@ public:
     }
     LinkedList<T> GetSubList(int startIndex, int endIndex) const 
     {
-        if (startIndex < 0 || endIndex >= length || startIndex > endIndex) 
-            throw std::out_of_range("Индекс вне диапазона");
+        if (startIndex < 0 || endIndex >= length || startIndex > endIndex) throw std::out_of_range("Индекс вне диапазона");
         LinkedList<T> sublist;
         Node* current = head;
         for (int i = 0; current && i <= endIndex; i++) 
@@ -112,8 +136,7 @@ public:
     void InsertAt(T item, int index) 
     {
         if (index < 0 || index > length) throw std::out_of_range("Индекс вне диапазона");
-        if (index == 0) 
-        {
+        if (index == 0) {
             Prepend(item);
         } 
         else 
